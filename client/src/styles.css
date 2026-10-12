@@ -1061,5 +1061,12 @@ td:first-child {
   }
 }
 /* Keep narrow viewports from widening to the table's intrinsic width. */
-.main, .applications { min-width: 0; }
-.table-wrap { width: 100%; max-width: 100%; }
+.main,
+.applications {
+  min-width: 0;
+}
+.table-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+}
