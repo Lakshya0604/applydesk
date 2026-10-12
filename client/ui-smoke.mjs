@@ -9,7 +9,7 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 await page.goto(process.env.BASE_URL || "http://127.0.0.1:4000");
 await page.getByRole("heading", { name: "Welcome back." }).waitFor();
-await page.screenshot({ path: "../docs/sign-in.png", fullPage: true });
+await page.screenshot({ path: "../docs/sign-in.png", fullPage: true, timeout: 10000 });
 await page
   .getByRole("button", { name: "Create an account", exact: true })
   .click();
@@ -86,11 +86,11 @@ for (const item of examples) {
 }
 await page.screenshot({
   path: "../docs/dashboard-desktop.png",
-  fullPage: true,
+  fullPage: true, timeout: 10000,
 });
 await page.getByRole("button", { name: "Northstar Labs", exact: true }).click();
 await page.getByRole("dialog").waitFor();
-await page.screenshot({ path: "../docs/edit-application.png", fullPage: true });
+await page.screenshot({ path: "../docs/edit-application.png", fullPage: true, timeout: 10000 });
 await page
   .getByLabel("Notes")
   .fill("Prepare a short walkthrough of API design and ownership checks.");
@@ -113,7 +113,7 @@ await page.waitForFunction(
 await page.getByRole("button", { name: "Clear search" }).click();
 await page.getByRole("button", { name: "Atlas Works", exact: true }).waitFor();
 await page.setViewportSize({ width: 390, height: 844 });
-await page.screenshot({ path: "../docs/dashboard-mobile.png", fullPage: true });
+await page.screenshot({ path: "../docs/dashboard-mobile.png", fullPage: true, timeout: 10000 });
 await page.getByRole("button", { name: "Sign out" }).click();
 await page.getByRole("heading", { name: "Welcome back." }).waitFor();
 assert.deepEqual(errors, []);
