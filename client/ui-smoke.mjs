@@ -106,13 +106,24 @@ await page
 await page.getByRole("button", { name: "Save application" }).click();
 await page.getByRole("dialog").waitFor({ state: "hidden" });
 await page.getByRole("button", { name: /^Interview/ }).click();
-await page
-  .getByRole("button", { name: "Northstar Labs", exact: true })
-  .waitFor();
 await page.waitForFunction(
-  () => document.querySelectorAll("tbody tr").length === 1,
+  () => {
+    const rows = document.querySelectorAll("tbody tr");
+    return (
+      rows.length === 1 &&
+      rows[0].querySelector("button.company-link")?.textContent.trim() ===
+        "Northstar Labs" &&
+      rows[0].querySelector(".status")?.textContent.trim() === "Interview"
+    );
+  },
 );
-assert.equal(await page.locator("tbody tr").count(), 1);
+const filteredRow = page.locator("tbody tr");
+assert.equal(await filteredRow.count(), 1);
+assert.equal(
+  await filteredRow.locator("button.company-link").textContent(),
+  "Northstar Labs",
+);
+assert.equal(await filteredRow.locator(".status").textContent(), "Interview");
 await page.getByRole("button", { name: /^All applications/ }).click();
 await page
   .getByRole("textbox", { name: "Search applications" })
