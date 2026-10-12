@@ -60,7 +60,7 @@ npm test
 npm run build
 ```
 
-The 10 API integration tests start a temporary real MongoDB process using `mongodb-memory-server`; the first run downloads its binary. Tests cover auth validation, hashing/cookies, duplicates, CRUD persistence, URL/date/status validation, literal search, pagination, stats, per-user isolation, PATCH field preservation, content-type checks and logout.
+The 11 API integration tests start a temporary real MongoDB process using `mongodb-memory-server`; the first run downloads its binary. Tests cover auth validation (including bcrypt's UTF-8 byte limit), hashing/cookies, duplicates, CRUD persistence, URL/date/status validation, literal search, pagination, stats, per-user isolation, PATCH field preservation, content-type checks and logout.
 
 For the optional browser smoke test, start the app on port 4000 (or set `BASE_URL` to the frontend URL), then:
 
@@ -112,7 +112,22 @@ docs/                Screenshots using fictional demo data
 
 ## Code0 workflow / AI development experience
 
-**Work in progress: not yet a final assessment submission.** Code0 (`frigga.code0` 1.1.9) is installed in a disposable VS Code environment. Git initialization, component/API/test commits and the first pushes ran through that environment's integrated terminal. Frigga setup is being completed with access limited to this public repository. The 3-5 specific Code0 assistance tasks will be documented here only after they have actually been completed and validated.
+Code0 (`frigga.code0` 1.1.9) was used in a disposable VS Code environment with access limited to ApplyDesk. The app scaffold and initial feature commits existed before the Code0 chat tasks below; the tasks were then used for review and targeted improvements, rather than presented as the source of the entire app.
+
+### Four completed Code0 tasks
+
+1. **Review API security and ownership checks.** Code0 inspected authentication and application routes. It found that login accepted passwords longer than bcrypt's 72-byte UTF-8 limit while registration rejected them. A direct bcrypt experiment confirmed the truncation behavior. The owner-scoped queries did not need a speculative rewrite.
+2. **Fix password validation and add a regression.** Code0 moved the 72-byte check into the shared registration/login schema and added a test for a 72-byte multibyte password and a rejected 73-byte password. The changes were reviewed, and the full API suite passed 11/11.
+3. **Review frontend request handling and smoke-test waits.** Code0 checked the request-ID stale-response guard and the browser test. It found no confirmed request race, but identified that the Interview filter test accepted any single row without checking its company or status.
+4. **Strengthen the filter test.** Code0 added an exact Northstar Labs + Interview wait and assertions. An independent run caught a too-broad button selector, which also matched the delete button. Code0 narrowed it to `button.company-link`; the rerun passed, and a separate negative check rejected a wrong company and wrong status.
+
+### Workflow and checks
+
+Git initialization, commits and pushes were performed in the disposable VS Code integrated terminal with Code0 installed. The later review/fix commits were made with Code0 authenticated and open. This extension version did not expose a separately named Code0 terminal command, so this describes the terminal actually used.
+
+Every proposed edit was reviewed before permission was granted. Final checks: 11 API integration tests, Vite production build, browser smoke flow, desktop/mobile screenshots, and a tracked-file/history credential scan. The mobile layout fix and the first deterministic row-count wait were independent changes, not attributed to Code0.
+
+The practical lesson was to use small, file-scoped prompts and verify the result. Code0 found a real authentication edge case and improved test coverage, but its first UI-test edit still needed a correction after execution.
 
 ## Screenshots
 
