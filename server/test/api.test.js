@@ -73,6 +73,50 @@ describe("authentication and private application API", () => {
       credentials.name,
     );
   });
+  it("enforces the bcrypt UTF-8 byte limit on registration and login", async () => {
+    const password72Bytes = `${"a".repeat(70)}é`;
+    const password73Bytes = `${password72Bytes}a`;
+    const user = {
+      name: "Multibyte User",
+      email: "multibyte@example.com",
+      password: password72Bytes,
+    };
+
+    assert.equal(Buffer.byteLength(password72Bytes, "utf8"), 72);
+    assert.equal(Buffer.byteLength(password73Bytes, "utf8"), 73);
+    assert.equal(
+      (await request(app).post("/api/auth/register").send(user)).status,
+      201,
+    );
+    assert.equal(
+      (
+        await request(app)
+          .post("/api/auth/login")
+          .send({ email: user.email, password: password72Bytes })
+      ).status,
+      200,
+    );
+    assert.equal(
+      (
+        await request(app)
+          .post("/api/auth/login")
+          .send({ email: user.email, password: password73Bytes })
+      ).status,
+      400,
+    );
+    assert.equal(
+      (
+        await request(app)
+          .post("/api/auth/register")
+          .send({
+            ...user,
+            email: "over-limit@example.com",
+            password: password73Bytes,
+          })
+      ).status,
+      400,
+    );
+  });
   it("creates, persists and lists applications", async () => {
     const response = await alice
       .post("/api/applications")

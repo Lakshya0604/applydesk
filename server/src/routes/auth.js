@@ -12,7 +12,13 @@ const credentials = z
       .email()
       .max(254)
       .transform((s) => s.toLowerCase()),
-    password: z.string().min(8).max(72),
+    password: z
+      .string()
+      .min(8)
+      .refine(
+        (password) => Buffer.byteLength(password, "utf8") <= 72,
+        "Password must be at most 72 UTF-8 bytes.",
+      ),
   })
   .strict();
 const registration = credentials.extend({
@@ -49,10 +55,6 @@ router.use(
 );
 router.post("/register", async (req, res) => {
   const input = registration.parse(req.body);
-  if (Buffer.byteLength(input.password, "utf8") > 72)
-    return res
-      .status(400)
-      .json({ error: "Password must be at most 72 UTF-8 bytes." });
   const user = await User.create({
     name: input.name,
     email: input.email,
