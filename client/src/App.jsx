@@ -45,6 +45,8 @@ const initials = (name) =>
     .toUpperCase();
 function Auth({ onLogin }) {
   const [register, setRegister] = useState(false),
+    [forgot, setForgot] = useState(false),
+    [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function submit(event) {
@@ -53,6 +55,11 @@ function Auth({ onLogin }) {
     setError("");
     const values = Object.fromEntries(new FormData(event.currentTarget));
     try {
+      if (forgot) {
+        const d = await api("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email: values.email }) });
+        setNotice(d.message);
+        return;
+      }
       const data = await api(`/auth/${register ? "register" : "login"}`, {
         method: "POST",
         body: JSON.stringify(values),
@@ -98,7 +105,7 @@ function Auth({ onLogin }) {
       <section className="auth-form">
         <div>
           <span className="eyebrow">A LITTLE ORGANIZATION GOES A LONG WAY</span>
-          <h2>{register ? "Make room for opportunity." : "Welcome back."}</h2>
+          <h2>{forgot ? "Reset your password." : register ? "Make room for opportunity." : "Welcome back."}</h2>
           <p>
             {register
               ? "Create your private application workspace."
@@ -128,44 +135,56 @@ function Auth({ onLogin }) {
                 placeholder="you@example.com"
               />
             </label>
-            <label>
-              Password
-              <input
-                type="password"
-                name="password"
-                autoComplete={register ? "new-password" : "current-password"}
-                minLength={8}
-                maxLength={72}
-                required
-                placeholder="At least 8 characters"
-              />
-            </label>
+            {!forgot && (
+              <label>
+                Password
+                <input
+                  type="password"
+                  name="password"
+                  autoComplete={register ? "new-password" : "current-password"}
+                  minLength={8}
+                  maxLength={72}
+                  required
+                  placeholder="At least 8 characters"
+                />
+              </label>
+            )}
             {error && (
               <p role="alert" className="error">
                 {error}
               </p>
             )}
+            {notice && <p className="notice">{notice}</p>}
             <button className="primary full" disabled={busy}>
               {busy
                 ? "Please wait..."
-                : register
-                  ? "Create account"
-                  : "Sign in"}
+                : forgot
+                  ? "Send reset link"
+                  : register
+                    ? "Create account"
+                    : "Sign in"}
               <ArrowUpRight size={18} />
             </button>
           </form>
           <p className="auth-switch">
-            {register ? "Already have an account?" : "New to ApplyDesk?"}{" "}
+            {forgot ? "Remembered it?" : register ? "Already have an account?" : "New to ApplyDesk?"}{" "}
             <button
               onClick={() => {
-                setRegister(!register);
+                setRegister(forgot ? false : !register);
+                setForgot(false);
                 setError("");
+                setNotice("");
               }}
             >
-              {register ? "Sign in" : "Create an account"}
+              {register || forgot ? "Sign in" : "Create account"}
             </button>
-          </p>
-          <p className="privacy">
+            {!register && !forgot && (
+              <>
+                {" · "}
+                <button onClick={() => { setForgot(true); setError(""); setNotice(""); }}>Forgot password?</button>
+              </>
+            )}
+          </p>          <p className="privacy">
             Your applications stay private to your account.
           </p>
         </div>
@@ -330,6 +349,33 @@ function ApplicationForm({ item, onClose, onSave }) {
     </dialog>
   );
 }
+function ResetPage({ onDone }) {
+  const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const token = new URLSearchParams(window.location.search).get("reset") || "";
+  async function submit(e) {
+    e.preventDefault(); setBusy(true); setError("");
+    const values = Object.fromEntries(new FormData(e.currentTarget));
+    if (values.password !== values.confirm) { setError("Passwords do not match."); setBusy(false); return; }
+    try {
+      const d = await api("/auth/reset-password", { method: "POST", body: JSON.stringify({ token, password: values.password }) });
+      window.history.replaceState({}, "", "/");
+      onDone(d.user);
+    } catch (e2) { setError(e2.message); } finally { setBusy(false); }
+  }
+  return (
+    <div className="auth-page"><section className="auth-form"><div>
+      <span className="eyebrow">A FRESH START</span>
+      <h2>Choose a new password.</h2>
+      <form onSubmit={submit}>
+        <label>New password<input type="password" name="password" minLength={8} maxLength={72} required autoComplete="new-password" placeholder="At least 8 characters" /></label>
+        <label>Confirm password<input type="password" name="confirm" minLength={8} maxLength={72} required autoComplete="new-password" /></label>
+        {error && <p role="alert" className="error">{error}</p>}
+        <button className="primary full" disabled={busy}>{busy ? "Saving..." : "Save new password"}<ArrowUpRight size={18} /></button>
+      </form>
+    </div></section></div>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState(null),
     [checking, setChecking] = useState(true);
@@ -434,7 +480,7 @@ export default function App() {
   if (!user)
     return (
       <>
-        <Auth onLogin={setUser} />
+        {new URLSearchParams(window.location.search).get("reset") ? <ResetPage onDone={setUser} /> : <Auth onLogin={setUser} />}
         {error && (
           <div role="alert" className="toast error">
             {error}

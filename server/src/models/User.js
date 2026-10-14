@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
     passwordHash: { type: String, required: true, select: false },
+    resetHash: { type: String, default: null, select: false },
+    resetExpires: { type: Date, default: null, select: false },
   },
   { timestamps: true },
 );
